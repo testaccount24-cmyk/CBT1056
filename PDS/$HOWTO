@@ -1,0 +1,58 @@
+/*
+
+ Using RUNDATA for site-by-site customization of REXX code:
+
+
+ Many routines available for download by the wider user community are
+ -- no surprise -- written originally to operate at the originating
+ location, and are expected to be customized to local standards after
+ download and before they are made generally available at a remote
+ site.
+
+ The present custom is that when a new version of software is
+ downloaded from an originating site, customization done on the
+ now-obsolete version to make it operate correctly at that site must
+ be replicated on the newly-downloaded routine.
+
+ RUNDATA is an excellent vehicle for use as an 'automatic customizer'.
+
+ The datapoints requiring modification site-by-site can be specified
+ as part of a RUNDATA table row.  At a remote site, an installer
+ specifies the values for the individual datapoints required at that
+ site -- once.  If the routine to be customized gets its data from the
+ local site-specific RUNDATA table, a fresh download will pull in
+ (from the RUNDATA table) the historical datapoints applicable to the
+ remote site and all is well.
+
+ The RUNDATA table doesn't change from version to version save only
+ for newly-implemented datapoints being added to the latest version.
+ In that case, installation instructions merely have to note the
+ nature of the modification needed to the local RUNDATA table:
+     "Note that tag OUTDS should be added to the RUNDATA table for key
+      TENSOR and specify the fully-qualified unquoted dataset name to
+      receive the diagnostic report.  The dataset name specified will
+      be created or overwritten as needed.  Example:
+
+      %RUNDATA WRITE TBLKEY tensor SAFE DATA(outds:<local dsname>;)
+
+      See the HELP-text for RUNDATA for more information."
+
+ To rig a REXX routine to utilize RUNDATA for this purpose, the
+ following method may be used:
+
+     address TSO
+     "NEWSTACK"
+     "RUNDATA READ TBLKEY zork "       /* sets ASMVER PLIVER COBVER  */
+     do queued()
+        pull tag tagval                /* may be multiple            */
+        tagval = Strip( tagval )
+        @z     = Value( tag,tagval )   /* tag <-- tagval             */
+     end                               /* queued                     */
+     "DELSTACK"
+
+ This example presupposes that the RUNDATA table has a key of 'zork'
+ and that one or more extension variables are attached to this row.
+ Each such extension variable has a value that, when substituted
+ within the REXX routine, permits the code to operate as expected.
+
+*/
