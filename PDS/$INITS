@@ -1,0 +1,30 @@
+/*
+
+  After emplacing the RUNDATA exec, you will want to load some initial
+  values to the RUNDATA table.
+
+  If you decide, for instance, to keep SYSUMON and use it as a
+  tool-usage repository, the RUNDATA table must be 'salted' with
+  values that SYSUMON needs.  A short one-time-use EXEC can handle
+  this easily:
+     address TSO
+     "NEWSTACK"
+     queue 'tblkey   sysumon '
+     queue 'rxvsamll  <the-loadlib-containing-RXVSAM> '
+     queue 'vspref    <the-HLQ-for-VSAM-datasets> '
+     queue 'nvpref    <the-HLQ-for-non-VSAM-datasets '
+     "RUNDATA WRITE"
+     "DELSTACK"
+  (Because SYSUMON calls RUNDATA, RUNDATA must not call SYSUMON or
+  cascading S/878s will result.)
+
+  After doing this, 'RUNDATA KEYLIST' will show that key SYSUMON
+  references tags RXVSAMLL, VSPREF, and NSPREF.
+
+  'RUNDATA READ TBLKEY SYSUMON' will echo back the values you set.
+
+  Using the same protocol, you can make locally-written REXX routines
+  RUNDATA-aware, enabling you to externally specify parameter data
+  that may change from time to time.
+
+*/

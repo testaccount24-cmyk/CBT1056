@@ -1,0 +1,69 @@
+/*
+
+ Are you responsible for REXX software that has to be customized at a
+ remote site?
+
+ Does that software have to be re-customized each time a sysprog
+ downloads a fresh copy?  Well, brother, do I ever have a sweet
+ proposal for auto-customizing that software!
+
+ It's called RUNDATA, and it works this way: each site will need a copy
+ of the RUNDATA (REXX) software and can use it to create their own
+ site-specific RUNDATA table.  The RUNDATA software is available in
+ files 433, 435, and 1056.
+
+ How does it work?  Let's suppose that your customization-required
+ routine (TOASTER) needs the installer to supply values for the
+ high-level-qualifier (HLQ) for output datasets, the limit (LIMIT) for
+ concatenated libraries, and the phone number (PHONE) of the HELP desk.
+ Because there's lots of data to be supplied, it makes sense to use the
+ queue:
+
+    address TSO
+    "NEWSTACK"
+    queue 'tblkey  toaster '            /* instead of a parameter...  */
+    queue 'hlq     acme.util '          /* HLQ for output dsets       */
+    queue 'limit   11 '                 /* concatenation limit        */
+    queue 'phone   x4420 '              /* HELP desk phone            */
+    "RUNDATA WRITE "                    /* TBLKEY is on the stack     */
+    "DELSTACK"
+
+ You might supply this code snippet in your installation instructions,
+ where you will advise the installer(s) to supply their own local
+ values for HLQ, LIMIT, and PHONE.  They (and you) only have to do this
+ once*, because the code-to-be-customized is about to be made
+ RUNDATA-aware.  In your customization-required routine (TOASTER), add
+ this block:
+
+    address TSO
+    "NEWSTACK"
+    "RUNDATA READ  TBLKEY TOASTER "
+    do queued()                         /* every line                 */
+       pull   tag  tagvalue             /* tagvalue may be multiple   */
+       tagvalue = Strip( tagvalue )
+       @z       = Value( tag,tagvalue ) /* tag <-- tagvalue           */
+    end                                 /* queued                     */
+    "DELSTACK"
+
+ This block fires up RUNDATA which
+      (a) opens the RUNDATA table and acquires key TOASTER, and
+      (b) puts each known tag onto the queue along with its value.
+ On return from RUNDATA, this block runs the queue, parsing out each
+ tag and its value, then assigns each value to its variable for use by
+ the enclosing routine (TOASTER).
+
+ That's it.  Once the RUNDATA table has been populated at a site, it
+ never* has to be done again.  When ACME Tool and Novelty Co. pulls a
+ fresh copy of TOASTER, it's already customized by virtue of getting
+ its required values from their existing RUNDATA table.
+
+
+ (*) Of course, when v.47 of TOASTER needs another value, CITY, each
+ installer (including you) will have to load that value to their
+ RUNDATA table -- once.  Piece of cake:
+
+    "RUNDATA WRITE TBLKEY TOASTER DATA(city:denver;) SAFE "
+
+ and it's done.
+
+*/

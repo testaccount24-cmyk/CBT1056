@@ -1,0 +1,43 @@
+/*  WRITE -------------------------------------------------------    */
+   "NEWSTACK"
+   queue 'tag1 tagdata1'         /* All tags may be entered this way */
+   queue 'tag2 tagdata2'
+   queue 'tag3 tagdata3'
+   "RUNDATA WRITE NOLOG TBLKEY " key
+   do queued()                         /* return from RUNDATA        */
+      pull line
+      if Pos("<ERROR>",line) > 0 then,
+         sw.0Error_Found = 1
+      say line
+   end                                 /* queued                     */
+   "DELSTACK"
+
+/*  READ  -------------------------------------------------------    */
+   "NEWSTACK"
+   "RUNDATA READ  TBLKEY CR "          /* sets BASEDSN               */
+   do queued()                         /* return from RUNDATA        */
+      pull tag tagval
+      if tag = "<ERROR>" then do
+         sw.0Error_Found = 1
+         "DELSTACK"
+         say tag tagval
+         return
+         end
+      tagval  = Space( tagval,1 )
+      @z   = Value( tag,tagval )       /* tag <-- tagval             */
+   end                                 /* queued                     */
+   if Symbol( 'basedsn' ) = 'LIT' then do
+      helpmsg = "RUNDATA did not supply a required value. ",
+                "Correct the RUNDATA table as specified",
+                "in the installation guide",
+                "before proceeding. "
+      say helpmsg
+      exit
+      end
+   "DELSTACK"
+
+/*  KEYLIST   ---------------------------------------------------    */
+   "RUNDATA KEYLIST "
+
+/*  DROP      ---------------------------------------------------    */
+   "RUNDATA DROP TBLKEY " key
