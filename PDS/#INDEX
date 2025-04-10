@@ -1,0 +1,39 @@
+
+         'FCLARKE.RUNDATA.EXEC' - Directory
+
+
+           Usage or
+ Member    Caller      Description
+ ========  =========   =====================================
+
+ $$$#DATE  data        Download stats
+
+ $AUTOCUS  text        Describes auto-customization technique
+
+ $HOWTO    text        How to operate RUNDATA
+
+ $INITS    text        Initialization instructions
+
+ #INDEX    data        This member
+
+ @FIL1056  text        Inventory
+
+ @RUNDATA  text        Code examples
+
+ DFLTTLIB  exec        Set default ISPTLIB
+
+ DUMPDATA  exec        Generate a reload exec for RUNDATA
+
+ LA        exec        LISTA ST to a scrollable display
+
+ RDSPLAIN  text        More information about RUNDATA operations
+
+ RUNDATA   exec        Maintain application-specific information
+
+ SHOWDATA  exec        Full-screen access to RUNDATA
+
+ STRSORT   exec        Sort a string of words
+
+ SYSUMON   exec        Count tool usage
+
+ TRAPOUT   exec        Trap trace output to DASD

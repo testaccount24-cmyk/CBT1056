@@ -1,0 +1,96 @@
+/*
+          How To RUNDATA
+
+      (An explanation of how the RUNDATA exec works.)
+
+ RUNDATA is a middling complex REXX routine centered around
+ maintaining execution-time data for REXX routines.  The data are kept
+ on a table (also called RUNDATA) as extension variables.  That means
+ that each RUNDATA table row potentially speaks to variables that
+ appear nowhere else on the table.  The benefit of this is that even
+ odd or unusual categories of run-time information can be sequestered
+ on the table against the moment some routine asks "what's the current
+ state of ...?"  Because RUNDATA uses ISPF Table Facilities, an ISPF
+ environment is required.
+
+ Because each key references potentially unique datapoints, each USER
+ may load a RUNDATA table row with their own USERID as the key, and
+ store on that row datapoints that are specific to that single USER.
+ Some users, especially system programmers, may have more than one
+ USERID.  Any routines within their repertoire that may require
+ USERID-specific datapoints can be auto-customized via the use of
+ RUNDATA.
+
+ Naturally, any routine that intends to use RUNDATA will have to be
+ prepared to READ the table and possibly WRITE the table as well.
+ RUNDATA has four functions: READ, WRITE, KEYLIST, and DROP.
+ Whichever function is in use must be the FIRST token passed to
+ RUNDATA.  The following calling sequence is NOT supported:
+.   ===> tso rundata tblkey flanker read
+ RUNDATA functions can also be invoked from any command line.
+
+ To see which keys are known to RUNDATA,
+.   ===> tso rundata keylist
+ This displays every key value on the RUNDATA table along with the
+ tags that are the extension variables attached to that key.
+
+ To see which tags are known to RUNDATA,
+.   ===> tso rundata taglist
+ This displays every extension variable on the RUNDATA table with the
+ keys in which they appear.
+
+ DROP deletes the row for the specified key value:
+.   ===> tso rundata drop tblkey shazam
+ All the extension variables for that key are purged with the row.
+ 'program' is synonymous with 'tblkey' but is a deprecated form.
+
+ Naturally a given key cannot be READ unless it has first been
+ written.  Writing datapoints to RUNDATA can be done in two different
+ ways, and they can be used in concert.  The first method is to use a
+ DATA string:
+.   ===> tso rundata write tblkey qzp data(lstfile:1048;lstdate:240202;)
+ places two extension variables (tags), LSTFILE and LSTDATE, onto the
+ RUNDATA table attached to key QZP.  If SAFE was not specified, any
+ existing tags not mentioned are irretrievably lost unless the REXX
+ code supplies them via the queue.  The format of a DATA string is
+
+.     DATA( <tag1> : <tagval1> ; <tagn> : <tagvaln> ; )
+
+ That is: within parentheses, each tag is followed by a colon, and
+ each tagvalue is followed by a semicolon.  The interior of the DATA
+ specification may not have parentheses, colons, or semicolons except
+ as required delimiters.  Blanks shown are not required.
+
+ The second method is to populate the queue prior to calling RUNDATA.
+ Each queue entry will consist of a tag (the extension variable name)
+ and a tagvalue.  In fact, it is possible to supply EVERY required
+ value by sending it through the queue, but if 'TBLKEY' or 'PROGRAM'
+ is not specified on the call, the first line in the queue must be
+ 'TBLKEY' with the value that otherwise would have been specified for
+ TBLKEY.   So in this case, we could have:
+   "NEWSTACK"
+   queue "tblkey qzp "
+   queue "lstfile 1048  "
+   "RUNDATA WRITE DATA(lstdate:240202;)  /* but this could have been
+                                            on the queue as well.    */
+   "DELSTACK"
+
+ READ operations should always be invoked within a NEWSTACK/DELSTACK
+ block since it is not impossible, and indeed quite likely, for
+ RUNDATA to deliver several tag+tagvalue pairs on the queue.
+   "NEWSTACK"
+   "RUNDATA READ TBLKEY QZP "          /* get LSTFILE and LSTDATE    */
+   do queued()
+      pull  tag tagval
+      tagval = Space( tagval,1 )       /* compress                   */
+      @z = Value( tag,tagval )         /* tag <-- tagval             */
+   end                                 /* queued                     */
+   "DELSTACK"
+
+ If any problems are encountered by RUNDATA, it pushes a line onto the
+ top of the stack and terminates.  The tag on the top line will be
+ '<ERROR>' followed by any available diagnostic information.  The
+ RUNDATA table will not have been updated.  The remainder of the queue
+ is undefined.
+
+*/

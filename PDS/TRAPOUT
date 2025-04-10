@@ -1,0 +1,21 @@
+/* This is REXX EXEC "TRAPOUT" to trap line output */
+address TSO
+rc = trace("O")
+"EXECUTIL TE"
+Parse arg TSOCMD             /* A TSO Command will be the input parm */
+rc = Outtrap("OUT.")         /* Turn on outtrap, to rexx stem OUT.   */
+(TSOCMD) "(( TRACE R"        /* Do the command                       */
+rc = Outtrap("OFF")
+
+parse value  Date('S') Time()  with ,
+             sdate     ntime  .
+If OUT.0 > 0 Then Do                   /* If any output, write       */
+   dsdate = Right( sdate,6 )           /* 950118 maybe               */
+   dstime = Space( Translate( ntime,' ',':' ) ,0 )
+   dsn    = "@@TRAP.D"dsdate".T"dstime".LIST"
+   X = Msg( "OFF" ) ; "DEL" dsn ; X = Msg( X )
+   "ALLOC FI(TRAPOUT) DA("dsn") NEW CATALOG REU SP(5,5) CYL ",
+            "RECFM(V B) LRECL(255) BLKSIZE(0)"
+   "EXECIO" out.0 "DISKW TRAPOUT (STEM OUT. FINIS"
+   "FREE  FI(TRAPOUT)"
+   end

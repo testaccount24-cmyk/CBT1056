@@ -1,0 +1,57 @@
+/* REXX    STRSORT   Sort a string of words into ascending or
+                     descending sequence.
+
+           Written by Frank Clarke  rexxhead@yahoo.com  19951011
+
+     Modification History
+     20020903 fxc return compressed string
+     20030521 fxc enable return via stack
+     20250207 fxc enable QUEUE, tracing;
+
+
+      The following code shows how STRSORT might be called:
+   string = "D M A B N"
+   string2 = STRSORT(string)
+   say string2
+   string2 = STRSORT(string,"D")
+   say string2
+
+*/
+address TSO
+arg parms "((" opts
+opts = Strip(opts,"T",")")
+parse var opts "TRACE"  tv  .
+parse value tv "N"  with  tv .
+rc = Trace("O"); rc = Trace(tv)
+
+   arg       string , dir
+
+   parse value "" with,
+              answer  .
+   parse value dir "A"   with dir .    /* default to 'ascending'     */
+
+   if dir = "A" then,                  /* ascending                  */
+   do while string <> ""
+      parse var string currwd string   /* get next word              */
+      do ii = Words(answer) to 1 by -1,
+              while(currwd < Word(answer,ii))
+      end                              /* where does it go?          */
+      front  = Subword(answer,1,ii)    /* split answer here          */
+      back   = Subword(answer,ii+1)
+      answer = front currwd back       /* insert between             */
+   end
+   /* this sorts in reverse order.... */
+   else,
+   do while string <> ""
+      parse var string currwd string   /* get next word              */
+      do ii = 1 to Words(answer),
+              until(currwd > Word(answer,ii))
+      end
+      front  = Subword(answer,1,ii-1)  /* split answer here          */
+      back   = Subword(answer,ii)
+      answer = front currwd back       /* insert between             */
+   end
+
+if Wordpos("QUEUE",opts) > 0 then queue Space(answer,1)
+else,
+return(Space(answer,1))                /*@ STRSORT                   */
